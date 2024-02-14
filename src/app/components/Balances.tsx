@@ -1,25 +1,44 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Flex, Spacer, Text, HStack, Button } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
 import { handleCopy } from "../utils/handleCopy";
 import { FaCopy } from "react-icons/fa";
-import { useEffect } from "react";
 import { useToast } from "@chakra-ui/react";
 
+interface Balance {
+    symbol: string;
+    value: string;
+}
 
-const Balances = () => {
+const Balances: React.FC = () => {
     const { keepkeyInstance } = useKeepKeyWallet();
-    const toast = useToast(); // Correctly use the hook inside the component
+    const toast = useToast();
+    const [balances, setBalances] = useState<Balance[]>([]);
+
     useEffect(() => {
-        //@ts-ignore
-        let assetString = keepkeyInstance?.ETH?.wallet.balance[0].getValue('string');
-
-        console.log(assetString);
-
+        if (keepkeyInstance) {
+            const newBalances: Balance[] = [];
+            //@ts-ignore
+            Object.keys(keepkeyInstance).forEach((key) => {
+                //@ts-ignore
+                keepkeyInstance[key].wallet.balance.forEach((balance: any) => {
+                    // console.log("balance: ",balance)
+                    if(balance.ticker && parseFloat(balance.getValue('string')) > 0){
+                        newBalances.push({
+                            chain: balance.chain,
+                            symbol: balance.ticker,
+                            value: balance.getValue('string'),
+                        });
+                    } else {
+                        console.error("BAD Balanace: ",balance)
+                    }
+                });
+            });
+            setBalances(newBalances);
+        }
     }, [keepkeyInstance]);
 
-
-    const showToast = (message: any) => {
+    const showToast = (message: string) => {
         toast({
             title: message,
             status: "success",
@@ -30,29 +49,17 @@ const Balances = () => {
         });
     };
 
-
     return (
         <Flex align="center" justify="center" p={4}>
             <Box>
                 <Spacer />
-                {Object.entries(keepkeyInstance || {}).map(([currency, data]: [string, any]) => (
-                    <Box key={currency} p={5} shadow="md" borderWidth="1px" borderRadius="lg">
-                        <center>
-                            <Text fontSize="2xl" fontWeight="bold" mb={3}>
-                                {currency}
+                {balances.map((balance, index) => (
+                    <Box key={index} p={5} shadow="md" borderWidth="1px" borderRadius="lg">
+                        <Flex justify="space-between">
+                            <Text fontSize="md" mt={1}>
+                                {balance.chain}: {balance.symbol}: {balance.value}
                             </Text>
-                        </center>
-                        <HStack>
-                            <Text fontSize="md">Address: {data.wallet.address}</Text>
-                            <FaCopy onClick={() => handleCopy(String(data.wallet.address), showToast)} />
-                        </HStack>
-                        {data.wallet.balance.map((balance: any, index: any) => (
-                            <Flex key={index} justify="space-between">
-                                <Text fontSize="md" mt={1}>
-                                    {balance.symbol}
-                                </Text>
-                            </Flex>
-                        ))}
+                        </Flex>
                     </Box>
                 ))}
             </Box>
@@ -61,5 +68,3 @@ const Balances = () => {
 };
 
 export default Balances;
-
-
