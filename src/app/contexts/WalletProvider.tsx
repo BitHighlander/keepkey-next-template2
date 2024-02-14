@@ -1,8 +1,8 @@
 'use client';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-
-
-// Define the interface for your wallet details
+import { AssetValue } from '@coinmasters/core';
+// @ts-ignore
+import { Chain } from '@coinmasters/types';
 interface KeepKeyWallet {
     type: string;
     icon: string;
@@ -13,12 +13,12 @@ interface KeepKeyWallet {
 }
 
 //@ts-ignore
-import { getPaths } from "@pioneer-platform/pioneer-coins"; // Corrected import to use the new hook
+import { getPaths } from "@pioneer-platform/pioneer-coins";
 //@ts-ignore
 import { ChainToNetworkId, getChainEnumValue } from '@coinmasters/types';
 
 
-// Define the type for the context state
+
 interface WalletContextType {
     keepkeyInstance: KeepKeyWallet | null;
     connectWallet: () => Promise<void>;
@@ -45,14 +45,17 @@ const getWalletByChain = async (keepkey: any, chain: any) => {
             const pubkeyBalance = await walletMethods.getBalance([{ pubkey }]);
             balance.push(Number(pubkeyBalance[0].toFixed(pubkeyBalance[0].decimal)) || 0);
         }
-        balance = [{ total: balance.reduce((a, b) => a + b, 0), address }];
+        let assetValue = AssetValue.fromChainOrSignature(
+            Chain.Bitcoin,
+            balance.reduce((a, b) => a + b, 0),
+        );
+        balance = [assetValue];
     } else {
         balance = await walletMethods.getBalance([{ address }]);
     }
 
     return { address, balance };
 };
-
 
 export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) => {
     const [keepkeyInstance, setKeepKeyInstance] = useState<KeepKeyWallet | null>(null);
@@ -67,7 +70,7 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
             //     'THOR'
             // ]
 
-            const chains = ['ETH']; // Example chains
+            const chains = ['ETH'];
             // @ts-ignore
             const { keepkeyWallet } = await import('@coinmasters/wallet-keepkey');
             const walletKeepKey: KeepKeyWallet = {
@@ -156,9 +159,7 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
         }
     };
 
-    // When start verify if user is connected
     useEffect(() => {
-        // If yes, init the wallet object
         const isConnected = localStorage.getItem('connected');
         if (isConnected === "true") connectWallet()
     }, [])
@@ -179,6 +180,6 @@ export const useKeepKeyWallet = () => {
     return {
         connectWallet: context.connectWallet,
         keepkeyInstance: context.keepkeyInstance,
-        disconnectWallet: context.disconnectWallet
+        disconnectWallet: context.disconnectWallet,
     };
 }

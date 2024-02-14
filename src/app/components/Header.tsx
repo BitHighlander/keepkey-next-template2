@@ -8,7 +8,7 @@ const Header = () => {
     return (
         <Flex align="center" justify="space-between" p={4} bg="black">
             <Box>
-                <Image src="/next.svg" alt="CoinMasters" />
+                <Image boxSize={"36px"} src="/keepkey_logo.avif" alt="CoinMasters" />
             </Box>
             <Box>
                 <ConnectKK />
