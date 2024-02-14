@@ -20,9 +20,9 @@
     "react-icons": "^5.0.1"
   },
   "devDependencies": {
-    "@coinmasters/core": "^8.0.16",
-    "@coinmasters/helpers": "^8.0.16",
-    "@coinmasters/wallet-keepkey": "10.0.17",
+    "@coinmasters/core": "^8.0.18",
+    "@coinmasters/helpers": "^8.0.18",
+    "@coinmasters/wallet-keepkey": "10.0.19",
     "@coinmasters/toolbox-evm": "latest",
     "@types/node": "^20",
     "@types/react": "^18",

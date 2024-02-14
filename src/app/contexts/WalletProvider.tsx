@@ -61,16 +61,16 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
     const [keepkeyInstance, setKeepKeyInstance] = useState<KeepKeyWallet | null>(null);
     const initWallet = async () => {
         try {
-            // let chains =  [
-            //     'ARB',  'AVAX', 'BNB',
-            //     'BSC',  'BTC',  'BCH',
-            //     'GAIA', 'OSMO', 'XRP',
-            //     'DOGE', 'DASH', 'ETH',
-            //     'LTC',  'OP',   'MATIC',
-            //     'THOR'
-            // ]
+            let chains =  [
+                'ARB',  'AVAX', 'BNB',
+                'BSC',  'BTC',  'BCH',
+                'GAIA', 'OSMO', 'XRP',
+                'DOGE', 'DASH', 'ETH',
+                'LTC',  'OP',   'MATIC',
+                'THOR'
+            ]
 
-            const chains = ['ETH'];
+            // const chains = ['ETH'];
             // @ts-ignore
             const { keepkeyWallet } = await import('@coinmasters/wallet-keepkey');
             const walletKeepKey: KeepKeyWallet = {
