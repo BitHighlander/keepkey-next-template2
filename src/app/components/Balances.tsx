@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Box, Flex, Spacer, Text, HStack, Button } from "@chakra-ui/react";
+import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
 import { handleCopy } from "../utils/handleCopy";
 import { FaCopy } from "react-icons/fa";
 import { useToast } from "@chakra-ui/react";
-
 interface Balance {
     symbol: string;
     value: string;
+    chain: string;
+    address: any;
 }
 
 const Balances: React.FC = () => {
@@ -17,20 +18,26 @@ const Balances: React.FC = () => {
 
     useEffect(() => {
         if (keepkeyInstance) {
+            console.log("keepkeyInstance: ", keepkeyInstance);
+            //@ts-ignore
+            console.log('addresss', keepkeyInstance.ETH.wallet.address);
             const newBalances: Balance[] = [];
             //@ts-ignore
             Object.keys(keepkeyInstance).forEach((key) => {
                 //@ts-ignore
                 keepkeyInstance[key].wallet.balance.forEach((balance: any) => {
                     // console.log("balance: ",balance)
-                    if(balance.ticker && parseFloat(balance.getValue('string')) > 0){
+                    if (balance.ticker && parseFloat(balance.getValue('string'))) {
                         newBalances.push({
                             chain: balance.chain,
                             symbol: balance.ticker,
                             value: balance.getValue('string'),
+                            address: keepkeyInstance[key].wallet.address, // Attach wallet address
                         });
+
+
                     } else {
-                        console.error("BAD Balanace: ",balance)
+                        console.error("BAD Balanace: ", balance)
                     }
                 });
             });
@@ -50,18 +57,35 @@ const Balances: React.FC = () => {
     };
 
     return (
-        <Flex align="center" justify="center" p={4}>
+        <Flex align="center" justify="center" p={4} backgroundColor={'gray'}>
             <Box>
                 <Spacer />
-                {balances.map((balance, index) => (
-                    <Box key={index} p={5} shadow="md" borderWidth="1px" borderRadius="lg">
-                        <Flex justify="space-between">
-                            <Text fontSize="md" mt={1}>
-                                {balance.chain}: {balance.symbol}: {balance.value}
-                            </Text>
-                        </Flex>
-                    </Box>
-                ))}
+                <Table variant="simple">
+                    <Thead>
+                        <Tr>
+                            <Th>Chain</Th>
+                            <Th>Symbol</Th>
+                            <Th>Value</Th>
+                            <Th>Address</Th>
+                            <Th>Actions</Th>
+                        </Tr>
+                    </Thead>
+                    <Tbody>
+                        {balances.map((balance, index) => (
+                            <Tr key={index}>
+                                <Td>{balance.chain}</Td>
+                                <Td>{balance.symbol}</Td>
+                                <Td>{balance.value}</Td>
+                                <Td>{balance.address}</Td>
+                                <Td>
+                                    <Button>
+                                        Send
+                                    </Button>
+                                </Td>
+                            </Tr>
+                        ))}
+                    </Tbody>
+                </Table>
             </Box>
         </Flex>
     );

@@ -10,6 +10,8 @@ interface KeepKeyWallet {
     wallet: any;
     status: string;
     isConnected: boolean;
+    [key: string]: any;
+
 }
 
 //@ts-ignore
@@ -61,13 +63,17 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
     const [keepkeyInstance, setKeepKeyInstance] = useState<KeepKeyWallet | null>(null);
     const initWallet = async () => {
         try {
-            let chains =  [
-                'ARB',  'AVAX', 'BNB',
-                'BSC',  'BTC',  'BCH',
-                'GAIA', 'OSMO', 'XRP',
-                'DOGE', 'DASH', 'ETH',
-                'LTC',  'OP',   'MATIC',
-                'THOR'
+            let chains = [
+                'BTC',
+
+                'ETH',
+                'MAYA',
+                'THOR',
+                'BNB',
+                'LTC',
+                'DASH',
+                'DOGE',
+
             ]
 
             // const chains = ['ETH'];
