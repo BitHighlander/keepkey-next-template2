@@ -1,5 +1,6 @@
 'use client';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+//@ts-ignore
 import { AssetValue } from '@coinmasters/core';
 // @ts-ignore
 import { Chain } from '@coinmasters/types';
@@ -23,14 +24,18 @@ import { ChainToNetworkId, getChainEnumValue } from '@coinmasters/types';
 
 interface WalletContextType {
     keepkeyInstance: KeepKeyWallet | null;
-    connectWallet: () => Promise<void>;
+    connectWallet: (selectedChains: string[]) => Promise<void>;
     disconnectWallet: () => Promise<void>;
+    selectedChains: string[]; // Add this line
 }
+
 
 export const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 interface KeepKeyWalletProviderProps {
     children: ReactNode;
+    selectedChains: string[]; // Add this line if you intend to pass selectedChains as a prop
+
 }
 
 const getWalletByChain = async (keepkey: any, chain: any) => {
@@ -48,7 +53,7 @@ const getWalletByChain = async (keepkey: any, chain: any) => {
             balance.push(Number(pubkeyBalance[0].toFixed(pubkeyBalance[0].decimal)) || 0);
         }
         let assetValue = AssetValue.fromChainOrSignature(
-            Chain.Bitcoin,
+            chain,
             balance.reduce((a, b) => a + b, 0),
         );
         balance = [assetValue];
@@ -59,22 +64,14 @@ const getWalletByChain = async (keepkey: any, chain: any) => {
     return { address, balance };
 };
 
-export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) => {
+export const KeepKeyWalletProvider = ({ children, selectedChains }: KeepKeyWalletProviderProps) => {
+
     const [keepkeyInstance, setKeepKeyInstance] = useState<KeepKeyWallet | null>(null);
-    const initWallet = async () => {
+
+    const initWallet = async (selectedChains: string[]) => {
         try {
-            let chains = [
-                'BTC',
+            let chains = selectedChains; // Use this to determine which chains to initialize
 
-                'ETH',
-                'MAYA',
-                'THOR',
-                'BNB',
-                'LTC',
-                'DASH',
-                'DOGE',
-
-            ]
 
             // const chains = ['ETH'];
             // @ts-ignore
@@ -82,7 +79,7 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
             const walletKeepKey: KeepKeyWallet = {
                 type: 'KEEPKEY',
                 icon: 'https://pioneers.dev/coins/keepkey.png',
-                chains,
+                chains: selectedChains,
                 wallet: keepkeyWallet,
                 status: 'offline',
                 isConnected: false,
@@ -146,15 +143,18 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
             throw new Error('Failed to initialize wallet');
         }
     };
-    const connectWallet = async () => {
+    const connectWallet = async (selectedChains: string[]) => {
         try {
-            let keepkeyInit = await initWallet();
-            setKeepKeyInstance(keepkeyInit)
+            // Pass selectedChains to initWallet
+            let keepkeyInit = await initWallet(selectedChains);
+            setKeepKeyInstance(keepkeyInit);
             localStorage.setItem('connected', "true");
         } catch (error) {
             console.error("Failed to initialize wallet", error);
         }
     };
+
+
 
     const disconnectWallet = async () => {
         try {
@@ -167,12 +167,12 @@ export const KeepKeyWalletProvider = ({ children }: KeepKeyWalletProviderProps) 
 
     useEffect(() => {
         const isConnected = localStorage.getItem('connected');
-        if (isConnected === "true") connectWallet()
+        if (isConnected === "true") connectWallet(selectedChains)
     }, [])
 
 
     return (
-        <WalletContext.Provider value={{ keepkeyInstance, connectWallet, disconnectWallet }}>
+        <WalletContext.Provider value={{ keepkeyInstance, connectWallet, disconnectWallet, selectedChains }}>
             {children}
         </WalletContext.Provider>
     );

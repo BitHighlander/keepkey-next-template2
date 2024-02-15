@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, } from "@chakra-ui/react";
+import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, Avatar } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
 import { handleCopy } from "../utils/handleCopy";
 import { FaCopy } from "react-icons/fa";
 import { useToast } from "@chakra-ui/react";
+// @ts-ignore
+import { COIN_MAP_LONG } from '@pioneer-platform/pioneer-coins';
+
 interface Balance {
     symbol: string;
     value: string;
@@ -20,7 +23,6 @@ const Balances: React.FC = () => {
         if (keepkeyInstance) {
             console.log("keepkeyInstance: ", keepkeyInstance);
             //@ts-ignore
-            console.log('addresss', keepkeyInstance.ETH.wallet.address);
             const newBalances: Balance[] = [];
             //@ts-ignore
             Object.keys(keepkeyInstance).forEach((key) => {
@@ -34,8 +36,6 @@ const Balances: React.FC = () => {
                             value: balance.getValue('string'),
                             address: keepkeyInstance[key].wallet.address, // Attach wallet address
                         });
-
-
                     } else {
                         console.error("BAD Balanace: ", balance)
                     }
@@ -73,7 +73,12 @@ const Balances: React.FC = () => {
                     <Tbody>
                         {balances.map((balance, index) => (
                             <Tr key={index}>
-                                <Td>{balance.chain}</Td>
+                                <Td>
+                                    <Avatar
+                                        size="md"
+                                        src={`https://pioneers.dev/coins/${COIN_MAP_LONG[balance.chain]}.png`}
+                                    />
+                                </Td>
                                 <Td>{balance.symbol}</Td>
                                 <Td>{balance.value}</Td>
                                 <Td>{balance.address}</Td>
