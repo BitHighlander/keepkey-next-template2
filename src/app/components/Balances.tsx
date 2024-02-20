@@ -1,3 +1,4 @@
+// path: src/app/components/Balances.tsx
 import React, { useState, useEffect } from "react";
 import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, Avatar } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
@@ -6,6 +7,7 @@ import { FaCopy } from "react-icons/fa";
 import { useToast } from "@chakra-ui/react";
 // @ts-ignore
 import { COIN_MAP_LONG } from '@pioneer-platform/pioneer-coins';
+import TransferModal from "./TransferModal";
 
 interface Balance {
     symbol: string;
@@ -18,6 +20,10 @@ const Balances: React.FC = () => {
     const { keepkeyInstance } = useKeepKeyWallet();
     const toast = useToast();
     const [balances, setBalances] = useState<Balance[]>([]);
+    const [isModalOpen, setModalOpen] = useState(false);
+    const [sendingWallet, setSendingWallet] = useState("");
+    const [chain, setChain] = useState("");
+    const [symbol, setSymbol] = useState("");
 
     useEffect(() => {
         if (keepkeyInstance) {
@@ -29,7 +35,7 @@ const Balances: React.FC = () => {
                 //@ts-ignore
                 keepkeyInstance[key].wallet.balance.forEach((balance: any) => {
                     // console.log("balance: ",balance)
-                    if (balance.ticker && parseFloat(balance.getValue('string'))) {
+                    if (balance.ticker) {
                         newBalances.push({
                             chain: balance.chain,
                             symbol: balance.ticker,
@@ -60,6 +66,14 @@ const Balances: React.FC = () => {
         <Flex align="center" justify="center" p={4} backgroundColor={'gray'}>
             <Box>
                 <Spacer />
+                {/* may be I can pass the whole balance object here, instead of prop by prop */}
+                <TransferModal
+                    isModalOpen={isModalOpen}
+                    setModalOpen={setModalOpen} // Pass setModalOpen as a prop
+                    sendingWallet={sendingWallet}
+                    chain={chain}
+                    symbol={symbol}
+                />
                 <Table variant="simple">
                     <Thead>
                         <Tr>
@@ -83,7 +97,14 @@ const Balances: React.FC = () => {
                                 <Td>{balance.value}</Td>
                                 <Td>{balance.address}</Td>
                                 <Td>
-                                    <Button>
+                                    <Button
+                                        onClick={() => {
+                                            setModalOpen(true);
+                                            setSendingWallet(balance.address);
+                                            setChain(balance.chain);
+                                            setSymbol(balance.symbol);
+                                        }}
+                                    >
                                         Send
                                     </Button>
                                 </Td>

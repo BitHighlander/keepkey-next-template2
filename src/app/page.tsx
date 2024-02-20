@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { ChakraProvider } from "@chakra-ui/react";
 import Header from "./components/Header"; // Assume this includes ConnectKK
-import Balances from "./components/Balances";
 import { KeepKeyWalletProvider } from './contexts/WalletProvider';
 import { extendTheme } from "@chakra-ui/react";
 import HomePage from '.';
@@ -13,9 +12,9 @@ export default function Home() {
   const theme = extendTheme({
     styles: {
       global: {
-        // styles for the `body`
+
         body: {
-          bg: "black", // or any color/theme you want for the background
+          bg: "black",
           height: "100%",
           width: "100%",
           margin: 0,
@@ -29,12 +28,11 @@ export default function Home() {
       },
     },
   });
+
   return (
     <ChakraProvider theme={theme}>
-
       <KeepKeyWalletProvider selectedChains={selectedChains}>
-
-        <Header /> {/* ConnectKK is presumably part of Header */}
+        <Header />
         <HomePage />
       </KeepKeyWalletProvider>
     </ChakraProvider>

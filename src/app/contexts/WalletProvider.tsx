@@ -1,3 +1,5 @@
+// path: src/app/contexts/WalletProvider.tsx
+
 'use client';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 //@ts-ignore
