@@ -2,10 +2,13 @@
 
 import { useContext } from 'react';
 import { AssetValue } from '@coinmasters/core';
+
+
+
 export function useHandleTransfer(keepkeyInstance: any) {
 
-    const handleTransfer = async (asset: string, amount: number, destination: string, chain: string) => {
-        console.log(chain)
+    const handleTransfer = async ({ asset, amount, destination, chain, memo = ''}:any) => {
+        console.log("handleTransfer: input: ",{ asset, amount, destination, chain, memo})
         const walletMethods = keepkeyInstance[chain]?.walletMethods;
         console.log(walletMethods)
         if (!asset || !amount) return;
@@ -13,6 +16,7 @@ export function useHandleTransfer(keepkeyInstance: any) {
         if (asset && keepkeyInstance[chain]?.walletMethods) {
             try {
                 const assetString = `${chain}.${asset}`;
+                console.log("assetString: ", assetString);
                 await AssetValue.loadStaticAssets();
 
                 let assetValue = await AssetValue.fromString(
@@ -22,7 +26,7 @@ export function useHandleTransfer(keepkeyInstance: any) {
 
                 let sendPayload = {
                     assetValue,
-                    memo: 'Sending Stuff',
+                    memo,
                     recipient: destination,
                 };
                 console.log(sendPayload)

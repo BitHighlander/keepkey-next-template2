@@ -20,6 +20,7 @@ const Balances: React.FC = () => {
     const { keepkeyInstance } = useKeepKeyWallet();
     const toast = useToast();
     const [balances, setBalances] = useState<Balance[]>([]);
+    const [asset, setAsset] = useState<any>(null);
     const [isModalOpen, setModalOpen] = useState(false);
     const [sendingWallet, setSendingWallet] = useState("");
     const [chain, setChain] = useState("");
@@ -71,7 +72,7 @@ const Balances: React.FC = () => {
                     isModalOpen={isModalOpen}
                     setModalOpen={setModalOpen} // Pass setModalOpen as a prop
                     sendingWallet={sendingWallet}
-                    chain={chain}
+                    asset={asset}
                     symbol={symbol}
                 />
                 <Table variant="simple">
@@ -99,6 +100,7 @@ const Balances: React.FC = () => {
                                 <Td>
                                     <Button
                                         onClick={() => {
+                                            setAsset(balance);
                                             setModalOpen(true);
                                             setSendingWallet(balance.address);
                                             setChain(balance.chain);
