@@ -15,9 +15,10 @@ interface TransferModalProps {
 }
 
 
-const TransferModal: React.FC<TransferModalProps> = ({ sendingWallet, isModalOpen, setModalOpen, chain, symbol }) => {
+const TransferModal: React.FC<TransferModalProps> = ({ sendingWallet, isModalOpen, setModalOpen, asset, symbol }) => {
     const [amount, setAmount] = useState('');
     const [destinationWallet, setDestinationWallet] = useState('');
+    const [memo, setMemo] = useState('');
     const handleTransfer = useHandleTransfer(useKeepKeyWallet().keepkeyInstance);
     const toast = useToast();
 
@@ -35,8 +36,8 @@ const TransferModal: React.FC<TransferModalProps> = ({ sendingWallet, isModalOpe
 
     const handleTransferClick = async () => {
         try {
-            console.log(chain)
-            const txHash = await handleTransfer(sendingWallet, Number(amount), destinationWallet, chain);
+            console.log("asset: ",asset)
+            const txHash = await handleTransfer({asset:asset.symbol, chain:asset.chain, from:sendingWallet, amount:Number(amount), destination:destinationWallet});
             showToast(`Transfer successful! TxHash: ${txHash}`);
         } catch (error) {
             console.error("Transfer failed", error);
@@ -59,6 +60,10 @@ const TransferModal: React.FC<TransferModalProps> = ({ sendingWallet, isModalOpe
                         <Box mb={4}>
                             <Text>Destination Wallet:</Text>
                             <Input value={destinationWallet} onChange={(e) => setDestinationWallet(e.target.value)} />
+                        </Box>
+                        <Box mb={4}>
+                            <Text>Memo:</Text>
+                            <Input value={memo} onChange={(e) => setMemo(e.target.value)} />
                         </Box>
                         <Flex>
                             <Button colorScheme="blue" onClick={handleTransferClick}>Transfer</Button>
