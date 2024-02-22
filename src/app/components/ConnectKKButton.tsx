@@ -23,7 +23,7 @@ const availableChains = ['BTC', 'ETH', 'MAYA', 'THOR', 'BNB', 'LTC', 'DASH', 'DO
 export default function ConnectKK() {
   const { connectWallet, disconnectWallet, keepkeyInstance } = useKeepKeyWallet();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [selectedChains, setSelectedChains] = useState([]);
+  const [selectedChains, setSelectedChains] = useState(['ETH']);
 
   const handleChainChange = (values: any) => {
     setSelectedChains(values);
@@ -37,9 +37,20 @@ export default function ConnectKK() {
   return (
     <Box display="flex" flexDirection="column" alignItems="center" gap={4}>
       {keepkeyInstance ? (
-        <Button colorScheme="red" onClick={async () => await disconnectWallet()}>
-          Disconnect Wallet
-        </Button>
+        selectedChains.length !== 0 ? (
+          <>
+
+            <HStack>
+
+              {selectedChains.map(chain => (
+                <Avatar key={chain} size="xs" src={`https://pioneers.dev/coins/${COIN_MAP_LONG[chain]}.png`} mr={2} />
+              ))}
+              <Button colorScheme="red" onClick={async () => await disconnectWallet()}>
+                Disconnect Wallet
+              </Button>
+            </HStack>
+          </>
+        ) : 'Select Chains'
       ) : (
         <HStack>
           <Menu closeOnSelect={false}>
@@ -83,7 +94,8 @@ export default function ConnectKK() {
             </Button>
           </Menu>
         </HStack>
-      )}
-    </Box>
+      )
+      }
+    </Box >
   );
 }

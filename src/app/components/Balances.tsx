@@ -1,6 +1,6 @@
 // path: src/app/components/Balances.tsx
 import React, { useState, useEffect } from "react";
-import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, Avatar, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Spacer, Text, HStack, Button, TableContainer, Table, Tr, Th, Tbody, Thead, Td, Avatar, IconButton } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
 import { handleCopy } from "../utils/handleCopy";
 import { FaCopy } from "react-icons/fa";
@@ -65,8 +65,13 @@ const Balances: React.FC = () => {
     };
 
     return (
-        <Flex align="center" justify="center" p={4} backgroundColor={'gray'}>
-            <Box>
+        <Flex
+            align="center"
+            justify="center"
+            p={4}
+            background="linear-gradient(to bottom, grey, black)"
+        >
+            <Box >
                 <Spacer />
                 {/* may be I can pass the whole balance object here, instead of prop by prop */}
                 <TransferModal
@@ -77,57 +82,61 @@ const Balances: React.FC = () => {
                     symbol={symbol}
                     chain={chain}
                 />
-                <Table variant="simple">
-                    <Thead>
-                        <Tr>
-                            <Th>Chain</Th>
-                            <Th>Symbol</Th>
-                            <Th>Value</Th>
-                            <Th>Address</Th>
-                            <Th>Actions</Th>
-                        </Tr>
-                    </Thead>
-                    <Tbody>
-                        {balances.map((balance, index) => (
-                            <Tr key={index}>
-                                <Td>
-                                    <Avatar
-                                        size="md"
-                                        src={`https://pioneers.dev/coins/${COIN_MAP_LONG[balance.chain]}.png`}
-                                    />
-                                </Td>
-                                <Td>{balance.symbol}</Td>
-                                <Td>{balance.value}</Td>
-                                <Td>
-                                    {balance.address}
-                                    <IconButton
-                                        aria-label="Copy Address"
-                                        bg={"transparent"}
-                                        _hover={{ bg: "transparent" }}
-                                        icon={<FaCopy />}
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(balance.address);
-                                            showToast("Address copied to clipboard");
-                                        }}
-                                    />
-                                </Td>
-                                <Td>
-                                    <Button
-                                        onClick={() => {
-                                            setAsset(balance);
-                                            setModalOpen(true);
-                                            setSendingWallet(balance.address);
-                                            setChain(balance.chain);
-                                            setSymbol(balance.symbol);
-                                        }}
-                                    >
-                                        Send
-                                    </Button>
-                                </Td>
+                <TableContainer sx={{ fontFamily: "'Share Tech Mono', monospace" }} // Using sx prop for custom styles
+                    border={"2px solid white"} borderRadius={"20px"}>
+
+                    <Table variant="simple" borderRadius={"20px"}>
+                        <Thead bg={"darkgrey"} >
+                            <Tr >
+                                <Th color={"white"}>Chain</Th>
+                                <Th color={"white"}>Symbol</Th>
+                                <Th color={"white"}>Value</Th>
+                                <Th color={"white"}>Address</Th>
+                                <Th color={"white"}>Actions</Th>
                             </Tr>
-                        ))}
-                    </Tbody>
-                </Table>
+                        </Thead>
+                        <Tbody  >
+                            {balances.map((balance, index) => (
+                                <Tr bgGradient="linear(to-r, gray.400, white)" key={index}>
+                                    <Td >
+                                        <Avatar
+                                            size="md"
+                                            src={`https://pioneers.dev/coins/${COIN_MAP_LONG[balance.chain]}.png`}
+                                        />
+                                    </Td>
+                                    <Td>{balance.symbol}</Td>
+                                    <Td>{balance.value}</Td>
+                                    <Td>
+                                        {balance.address}
+                                        <IconButton
+                                            aria-label="Copy Address"
+                                            bg={"transparent"}
+                                            _hover={{ bg: "transparent" }}
+                                            icon={<FaCopy />}
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(balance.address);
+                                                showToast("Address copied to clipboard");
+                                            }}
+                                        />
+                                    </Td>
+                                    <Td>
+                                        <Button
+                                            onClick={() => {
+                                                setAsset(balance);
+                                                setModalOpen(true);
+                                                setSendingWallet(balance.address);
+                                                setChain(balance.chain);
+                                                setSymbol(balance.symbol);
+                                            }}
+                                        >
+                                            Send
+                                        </Button>
+                                    </Td>
+                                </Tr>
+                            ))}
+                        </Tbody>
+                    </Table>
+                </TableContainer>
             </Box>
         </Flex>
     );
