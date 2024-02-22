@@ -12,6 +12,7 @@ interface TransferModalProps {
     setModalOpen: (isOpen: boolean) => void;
     chain: string;
     symbol: string;
+    asset: any;
 }
 
 
@@ -36,8 +37,8 @@ const TransferModal: React.FC<TransferModalProps> = ({ sendingWallet, isModalOpe
 
     const handleTransferClick = async () => {
         try {
-            console.log("asset: ",asset)
-            const txHash = await handleTransfer({asset:asset.symbol, chain:asset.chain, from:sendingWallet, amount:Number(amount), destination:destinationWallet});
+            console.log("asset: ", asset)
+            const txHash = await handleTransfer({ asset: asset.symbol, chain: asset.chain, from: sendingWallet, amount: Number(amount), destination: destinationWallet });
             showToast(`Transfer successful! TxHash: ${txHash}`);
         } catch (error) {
             console.error("Transfer failed", error);

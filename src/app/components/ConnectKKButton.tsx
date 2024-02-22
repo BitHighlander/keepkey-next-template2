@@ -43,9 +43,13 @@ export default function ConnectKK() {
       ) : (
         <HStack>
           <Menu closeOnSelect={false}>
-            <MenuButton as={Button} rightIcon={<FaArrowDown />} isLoading={isConnecting}>
+            <MenuButton mt={"10px"} _hover={{ bg: "transparente" }} bg={"darkgrey"} border={"1px solid white"} as={Button} rightIcon={<FaArrowDown color='white' />} isLoading={isConnecting}>
               {selectedChains.length > 0 ? (
-                <Avatar size="xs" src={firstSelectedChainLogo} mr={2} />
+                <HStack>
+                  {selectedChains.map(chain => (
+                    <Avatar key={chain} size="xs" src={`https://pioneers.dev/coins/${COIN_MAP_LONG[chain]}.png`} mr={2} />
+                  ))}
+                </HStack>
               ) : 'Select Chains'}
             </MenuButton>
             <MenuList minWidth="240px" zIndex={2}>

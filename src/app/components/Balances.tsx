@@ -1,6 +1,6 @@
 // path: src/app/components/Balances.tsx
 import React, { useState, useEffect } from "react";
-import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, Avatar } from "@chakra-ui/react";
+import { Box, Flex, Spacer, Text, HStack, Button, Table, Tr, Th, Tbody, Thead, Td, Avatar, IconButton } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
 import { handleCopy } from "../utils/handleCopy";
 import { FaCopy } from "react-icons/fa";
@@ -43,6 +43,7 @@ const Balances: React.FC = () => {
                             value: balance.getValue('string'),
                             address: keepkeyInstance[key].wallet.address, // Attach wallet address
                         });
+                        console.log("balancesss: ", newBalances);
                     } else {
                         console.error("BAD Balanace: ", balance)
                     }
@@ -74,6 +75,7 @@ const Balances: React.FC = () => {
                     sendingWallet={sendingWallet}
                     asset={asset}
                     symbol={symbol}
+                    chain={chain}
                 />
                 <Table variant="simple">
                     <Thead>
@@ -96,7 +98,19 @@ const Balances: React.FC = () => {
                                 </Td>
                                 <Td>{balance.symbol}</Td>
                                 <Td>{balance.value}</Td>
-                                <Td>{balance.address}</Td>
+                                <Td>
+                                    {balance.address}
+                                    <IconButton
+                                        aria-label="Copy Address"
+                                        bg={"transparent"}
+                                        _hover={{ bg: "transparent" }}
+                                        icon={<FaCopy />}
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(balance.address);
+                                            showToast("Address copied to clipboard");
+                                        }}
+                                    />
+                                </Td>
                                 <Td>
                                     <Button
                                         onClick={() => {
