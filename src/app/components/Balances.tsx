@@ -1,6 +1,6 @@
 // path: src/app/components/Balances.tsx
 import React, { useState, useEffect } from "react";
-import { Box, Flex, Spacer, Text, HStack, Button, TableContainer, Table, Tr, Th, Tbody, Thead, Td, Avatar, IconButton } from "@chakra-ui/react";
+import { Tooltip, Center, Box, Flex, Spacer, Text, HStack, Button, TableContainer, Table, Tr, Th, Tbody, Thead, Td, Avatar, Badge, Input } from "@chakra-ui/react";
 import { useKeepKeyWallet } from "../contexts/WalletProvider";
 import { handleCopy } from "../utils/handleCopy";
 import { FaCopy } from "react-icons/fa";
@@ -8,13 +8,26 @@ import { useToast } from "@chakra-ui/react";
 // @ts-ignore
 import { COIN_MAP_LONG } from '@pioneer-platform/pioneer-coins';
 import TransferModal from "./TransferModal";
+import { Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon } from '@chakra-ui/react';
 
 interface Balance {
     symbol: string;
     value: string;
     chain: string;
     address: any;
+    usdValue?: number | null;
+    price?: number | null;
 }
+type CoinGeckoIdMap = {
+    [key: string]: string;
+};
+
+
+type SortOrder = {
+    column: string | null;
+    direction: 'none' | 'asc' | 'desc';
+};
+
 
 const Balances: React.FC = () => {
     const { keepkeyInstance } = useKeepKeyWallet();
@@ -26,32 +39,95 @@ const Balances: React.FC = () => {
     const [chain, setChain] = useState("");
     const [symbol, setSymbol] = useState("");
 
+    const coinGeckoIdMap: CoinGeckoIdMap = {
+        BTC: 'bitcoin',
+        ETH: 'ethereum',
+        USDT: 'tether',
+        THOR: 'thorchain',
+        LTC: 'litecoin',
+        DOGE: 'dogecoin',
+        MAYA: 'cacao',
+        // Add more mappings as needed
+    };
+    const chainColorMap = {
+        BTC: 'orange.400', // Bitcoin
+        ETH: 'blue.200', // Ethereum
+        USDT: 'green.500', // Tether
+        THOR: 'teal.400', // ThorChain
+        LTC: 'blue.100',  // Litecoin
+        DOGE: 'yellow.400', // Dogecoin
+        CACAO: 'brown.400', // Cacao
+        MAYA: 'brown.400', // Cacao
+        // Add more chains and their corresponding colors as needed
+    };
+
+
+    const fetchPrices = async (symbols: string[]) => {
+        // Translate symbols to CoinGecko IDs using the mapping
+        const ids = symbols.map(symbol => coinGeckoIdMap[symbol.toUpperCase()] || symbol.toLowerCase()).join(',');
+        console.log("ids: ", ids)
+        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`;
+        console.log("url: ", url)
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching prices from CoinGecko:", error);
+            return {};
+        }
+    };
+
+
     useEffect(() => {
         if (keepkeyInstance) {
-            console.log("keepkeyInstance: ", keepkeyInstance);
-            //@ts-ignore
-            const newBalances: Balance[] = [];
-            //@ts-ignore
-            Object.keys(keepkeyInstance).forEach((key) => {
-                //@ts-ignore
-                keepkeyInstance[key].wallet.balance.forEach((balance: any) => {
-                    // console.log("balance: ",balance)
-                    if (balance.ticker) {
-                        newBalances.push({
-                            chain: balance.chain,
-                            symbol: balance.ticker,
-                            value: balance.getValue('string'),
-                            address: keepkeyInstance[key].wallet.address, // Attach wallet address
-                        });
-                        console.log("balancesss: ", newBalances);
-                    } else {
-                        console.error("BAD Balanace: ", balance)
-                    }
+            const loadBalances = async () => {
+                const newBalances: Balance[] = [];
+                Object.keys(keepkeyInstance).forEach((key) => {
+                    keepkeyInstance[key].wallet.balance.forEach((balance: any) => {
+                        if (balance.ticker) {
+                            newBalances.push({
+                                chain: balance.chain,
+                                symbol: balance.ticker,
+                                value: balance.getValue('string'),
+                                address: keepkeyInstance[key].wallet.address,
+                            });
+                        } else {
+                            console.error("Bad Balance: ", balance);
+                        }
+                    });
                 });
-            });
-            setBalances(newBalances);
+
+                const symbols = newBalances.map(balance => balance.symbol.toLowerCase());
+
+                const prices = await fetchPrices(symbols);
+                console.log('Prices from CoinGecko:', prices);
+
+                const updatedBalances = newBalances.map(balance => {
+                    const coinGeckoId = coinGeckoIdMap[balance.symbol.toUpperCase()] || balance.symbol.toLowerCase();
+                    const price = prices[coinGeckoId]?.usd;
+                    console.log(`Price for ${balance.symbol} (${coinGeckoId}):`, price);
+                    const usdValue = (price !== undefined) ? price * parseFloat(balance.value) : null;
+                    console.log('USD Value:', usdValue);
+                    return {
+                        ...balance,
+                        usdValue: usdValue,
+                        price: price,
+                    };
+                });
+
+                console.log('Updated balances:', updatedBalances);
+                setBalances(updatedBalances);
+            };
+
+            loadBalances();
         }
     }, [keepkeyInstance]);
+
+    const totalUsdValue = balances.reduce((acc: number, balance: Balance) => {
+        return acc + (balance.usdValue || 0);
+    }, 0);
+
 
     const showToast = (message: string) => {
         toast({
@@ -63,6 +139,44 @@ const Balances: React.FC = () => {
             variant: "subtle",
         });
     };
+    const groupedBalances: { [key: string]: Balance[] } = balances.reduce((acc, balance) => {
+        // Use the chain as the key for grouping
+        if (!acc[balance.chain]) {
+            acc[balance.chain] = [];
+        }
+        acc[balance.chain].push(balance);
+        return acc;
+    }, {} as { [key: string]: Balance[] });
+
+
+    const [sortDirection, setSortDirection] = useState<"ascending" | "descending" | "none">("none");
+
+    const sortBalancesByUsdValue = () => {
+        const sortedBalances = [...balances]; // Create a shallow copy to avoid directly mutating state
+        if (sortDirection === "ascending") {
+            sortedBalances.sort((a, b) => (a.usdValue || 0) - (b.usdValue || 0));
+        } else if (sortDirection === "descending") {
+            sortedBalances.sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0));
+        }
+        // If sortDirection is "none", no need to sort the balances
+        return sortedBalances;
+    };
+
+    const toggleSortDirection = () => {
+        setSortDirection((currentDirection) => {
+            switch (currentDirection) {
+                case "none":
+                    return "ascending";
+                case "ascending":
+                    return "descending";
+                case "descending":
+                    return "none";
+                default:
+                    return "none";
+            }
+        });
+    };
+
 
     return (
         <Flex
@@ -70,8 +184,25 @@ const Balances: React.FC = () => {
             justify="center"
             p={4}
             background="linear-gradient(to bottom, grey, black)"
+            sx={{ fontFamily: "'Share Tech Mono', monospace" }}
+            w="full"
         >
             <Box >
+                <Center mb="4">
+                    <Badge
+                        background="white" color="white"
+                        p={4}
+                        borderRadius="lg"
+                        mb={4}
+                        border="2px solid black"
+                        boxShadow="lg"
+                        textAlign="center"
+                    >
+                        <Text color={"black"} fontSize="xl" fontWeight="bold" >
+                            Total Balance: {totalUsdValue.toFixed(2)} USD
+                        </Text>
+                    </Badge>
+                </Center>
                 <Spacer />
                 {/* may be I can pass the whole balance object here, instead of prop by prop */}
                 <TransferModal
@@ -82,63 +213,138 @@ const Balances: React.FC = () => {
                     symbol={symbol}
                     chain={chain}
                 />
-                <TableContainer sx={{ fontFamily: "'Share Tech Mono', monospace" }} // Using sx prop for custom styles
-                    border={"2px solid white"} borderRadius={"20px"}>
+                <Center>
 
-                    <Table variant="simple" borderRadius={"20px"}>
-                        <Thead bg={"darkgrey"} >
-                            <Tr >
-                                <Th color={"white"}>Chain</Th>
-                                <Th color={"white"}>Symbol</Th>
-                                <Th color={"white"}>Value</Th>
-                                <Th color={"white"}>Address</Th>
-                                <Th color={"white"}>Actions</Th>
-                            </Tr>
-                        </Thead>
-                        <Tbody  >
-                            {balances.map((balance, index) => (
-                                <Tr bgGradient="linear(to-r, gray.400, white)" key={index}>
-                                    <Td >
-                                        <Avatar
-                                            size="md"
-                                            src={`https://pioneers.dev/coins/${COIN_MAP_LONG[balance.chain]}.png`}
-                                        />
-                                    </Td>
-                                    <Td>{balance.symbol}</Td>
-                                    <Td>{balance.value}</Td>
-                                    <Td>
-                                        {balance.address}
-                                        <IconButton
-                                            aria-label="Copy Address"
-                                            bg={"transparent"}
-                                            _hover={{ bg: "transparent" }}
-                                            icon={<FaCopy />}
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(balance.address);
-                                                showToast("Address copied to clipboard");
-                                            }}
-                                        />
-                                    </Td>
-                                    <Td>
-                                        <Button
-                                            onClick={() => {
-                                                setAsset(balance);
-                                                setModalOpen(true);
-                                                setSendingWallet(balance.address);
-                                                setChain(balance.chain);
-                                                setSymbol(balance.symbol);
-                                            }}
-                                        >
-                                            Send
-                                        </Button>
-                                    </Td>
-                                </Tr>
+                    <TableContainer
+                        border={"2px solid white"}
+                        borderRadius={"20px"}
+                        w={"800px"}
+                    >
+                        <Accordion allowMultiple  >
+                            {Object.entries(groupedBalances).map(([chain, tokens]) => (
+                                <AccordionItem key={chain}>
+                                    <h1>
+                                        <AccordionButton>
+                                            <Box flex="1" textAlign="left" color={"white"} >
+                                                <Flex justifyContent={"space-between"} >
+                                                    <Box>
+
+                                                        <Avatar
+                                                            key={chain}
+                                                            size="xs"
+                                                            src={`https://pioneers.dev/coins/${COIN_MAP_LONG[chain]}.png`}
+                                                            mr={2}
+                                                        />
+                                                        {chain}
+                                                    </Box>
+
+                                                    <Badge
+                                                        borderRadius={"10px"}
+                                                        border={"2px solid black"}
+                                                        bg={"white"}
+                                                        color={"black"}
+                                                        fontSize={"26px"}>
+                                                        $
+                                                        {tokens
+                                                            .reduce(
+                                                                (acc: number, token: any) =>
+                                                                    acc + (token.usdValue || 0),
+                                                                0
+                                                            )
+                                                            .toFixed(2)}
+                                                    </Badge>
+                                                </Flex>
+                                            </Box>
+
+                                            <AccordionIcon />
+                                        </AccordionButton>
+                                    </h1>
+                                    <AccordionPanel pb={4}>
+                                        <Table variant="" >
+                                            <Thead color={"white"}>
+                                                <Tr>
+                                                    <Th>Symbol</Th>
+                                                    <Th>
+                                                        Amount
+                                                    </Th>
+                                                    <Th>
+                                                        USD Value
+                                                    </Th>
+                                                    <Th>
+                                                        Address
+                                                    </Th>
+                                                    <Th>
+
+                                                    </Th>
+                                                </Tr>
+                                            </Thead>
+                                            <Tbody color={"blue.200"}>
+                                                {tokens.map((token, index) => (
+                                                    <Tr color={chainColorMap[chain as keyof typeof chainColorMap] || 'gray'} key={index}>
+                                                        <Td>{token.symbol}</Td>
+                                                        <Td>
+                                                            <Box w={"100px"}>
+                                                                {token.value}
+                                                            </Box>
+                                                        </Td>
+                                                        <Td>
+                                                            $
+                                                            {token.usdValue ? token.usdValue.toFixed(2) : "0.00"}
+                                                        </Td>
+
+                                                        <Td>
+                                                            <Flex align="center">
+                                                                <Button
+                                                                    size="sm"
+                                                                    bg={"transparent"}
+                                                                    onClick={() => {
+                                                                        navigator.clipboard.writeText(token.address);
+                                                                        showToast("Address copied to clipboard");
+                                                                    }}
+                                                                    _hover={{ bg: "transparent" }}
+                                                                >
+                                                                    <FaCopy color="white" />
+                                                                </Button>
+                                                                <Input
+                                                                    value={token.address}
+                                                                    isReadOnly
+                                                                    borderRadius={"10px"}
+                                                                    size="120px"
+                                                                    height={"30px"}
+                                                                    w={"200px"}
+                                                                    mr={2}
+                                                                    padding={2}
+                                                                />
+                                                            </Flex>
+                                                        </Td>
+                                                        <Td>
+                                                            <Button
+                                                                size="sm"
+                                                                bg={"green.200"}
+                                                                onClick={() => {
+                                                                    setAsset(token);
+                                                                    setModalOpen(true);
+                                                                    setSendingWallet(token.address);
+                                                                    setChain(token.chain);
+                                                                    setSymbol(token.symbol);
+                                                                }}
+                                                            >
+                                                                Send
+                                                            </Button>
+                                                        </Td>
+                                                    </Tr>
+                                                ))}
+                                            </Tbody>
+                                        </Table>
+                                    </AccordionPanel>
+                                </AccordionItem>
                             ))}
-                        </Tbody>
-                    </Table>
-                </TableContainer>
+                        </Accordion>
+                    </TableContainer>
+                </Center>
+
             </Box>
-        </Flex>
+        </Flex >
     );
 };
 

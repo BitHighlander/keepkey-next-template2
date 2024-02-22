@@ -50,7 +50,7 @@ const TransferModal: React.FC<TransferModalProps> = ({ sendingWallet, isModalOpe
         <>
             <Modal isOpen={isModalOpen} onClose={() => setModalOpen(false)}>
                 <ModalOverlay />
-                <ModalContent>
+                <ModalContent bgGradient="linear(to-r, gray.400, white)">
                     <ModalHeader>Transfer {symbol}</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>

@@ -38,18 +38,20 @@ export default function ConnectKK() {
     <Box display="flex" flexDirection="column" alignItems="center" gap={4}>
       {keepkeyInstance ? (
         selectedChains.length !== 0 ? (
-          <>
 
-            <HStack>
-
-              {selectedChains.map(chain => (
-                <Avatar key={chain} size="xs" src={`https://pioneers.dev/coins/${COIN_MAP_LONG[chain]}.png`} mr={2} />
-              ))}
-              <Button colorScheme="red" onClick={async () => await disconnectWallet()}>
-                Disconnect Wallet
-              </Button>
-            </HStack>
-          </>
+          <HStack>
+            {selectedChains.map(chain => (
+              <Avatar key={chain} size="xs" src={`https://pioneers.dev/coins/${COIN_MAP_LONG[chain]}.png`} mr={2} />
+            ))}
+            <Button
+              colorScheme="red"
+              onClick={async () => {
+                await disconnectWallet();
+              }}
+            >
+              Disconnect
+            </Button>
+          </HStack>
         ) : 'Select Chains'
       ) : (
         <HStack>
